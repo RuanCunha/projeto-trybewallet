@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import requestFetchAPI from '../services/requestAPI';
-import { getCurrencies } from '../actions';
+import { actionSaveExpense, getCurrencies } from '../actions';
 // import { fetchAPICurrencies } from '../actions';
 
 const alimentacao = 'Alimentação';
@@ -12,11 +12,12 @@ class Form extends Component {
 
     this.state = {
       id: 0,
-      value: 0,
+      value: '',
       description: '',
       currency: 'USD',
       method: 'Dinheiro',
       tag: alimentacao,
+      exchangeRates: {},
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -32,18 +33,24 @@ class Form extends Component {
   setAPIOptions() {
     const { setFetchAPI } = this.props;
     requestFetchAPI()
-      .then((response) => { const array = Object.keys(response); setFetchAPI(array); });
+      .then((response) => {
+        this.setState({ exchangeRates: response });
+        const array = Object.keys(response);
+        setFetchAPI(array);
+      });
   }
 
   handleChange({ target }) {
-    const { name, value } = target;
+    const { id, value } = target;
     this.setState({
-      [name]: value,
+      [id]: value,
     });
   }
 
   handleClick() {
     const { id } = this.state;
+    const { setExpense } = this.props;
+    setExpense(this.state);
     this.setState({
       id: id + 1,
       value: 0,
@@ -52,6 +59,7 @@ class Form extends Component {
       method: 'dinheiro',
       tag: alimentacao,
     });
+    this.setAPIOptions();
   }
 
   render() {
@@ -62,7 +70,7 @@ class Form extends Component {
         <label htmlFor="value">
           Valor da despesa:
           <input
-            type="number"
+            type="text"
             id="value"
             data-testid="value-input"
             value={ value }
@@ -134,6 +142,7 @@ class Form extends Component {
 
 Form.propTypes = {
   currenciesArray: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
+  setExpense: PropTypes.func.isRequired,
   setFetchAPI: PropTypes.func.isRequired,
 };
 
@@ -143,6 +152,7 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   setFetchAPI: (state) => dispatch(getCurrencies(state)),
+  setExpense: (state) => dispatch(actionSaveExpense(state)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Form);
