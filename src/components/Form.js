@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import requestFetchAPI from '../services/requestAPI';
+import { fetchAPICurrencies } from '../actions';
 
 class Form extends Component {
   constructor() {
@@ -11,9 +14,22 @@ class Form extends Component {
       currency: 'USD',
       method: 'dinheiro',
       tag: 'alimentacao',
+      currenciesArray: [],
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.setAPIOptions = this.setAPIOptions.bind(this);
+  }
+
+  componentDidMount() {
+    this.setAPIOptions();
+  }
+  // Ajuda com o Thunk de Mariana Saraiva:
+  // https://github.com/tryber/sd-016-b-project-trybewallet/pull/55
+
+  setAPIOptions() {
+    requestFetchAPI()
+      .then((response) => this.setState({ currenciesArray: Object.keys(response) }));
   }
 
   handleChange({ target }) {
@@ -36,7 +52,7 @@ class Form extends Component {
   }
 
   render() {
-    const { value, description, currency, method, tag } = this.state;
+    const { value, description, currency, method, tag, currenciesArray } = this.state;
     return (
       <form>
         <label htmlFor="value">
@@ -61,13 +77,17 @@ class Form extends Component {
         </label>
         <label htmlFor="currency">
           Moeda:
-          <input
+          <select
             type="number"
             name="currency"
             data-testid="currency-input"
             value={ currency }
-            onChange={ () => {} }
-          />
+            onChange={ this.handleChange }
+          >
+            { currenciesArray
+              .filter((e) => e !== 'USDT')
+              .map((e) => <option key={ e }>{e}</option>) }
+          </select>
         </label>
         <label htmlFor="method">
           Metodo de pagamento:
@@ -108,4 +128,8 @@ class Form extends Component {
   }
 }
 
-export default (Form);
+const mapDispatchToProps = (dispatch) => ({
+  setFetchAPI: () => dispatch(fetchAPICurrencies()),
+});
+
+export default connect(null, mapDispatchToProps)(Form);
