@@ -1,8 +1,11 @@
+import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import requestFetchAPI from '../services/requestAPI';
-import { fetchAPICurrencies } from '../actions';
+import { getCurrencies } from '../actions';
+// import { fetchAPICurrencies } from '../actions';
 
+const alimentacao = 'Alimentação';
 class Form extends Component {
   constructor() {
     super();
@@ -12,9 +15,8 @@ class Form extends Component {
       value: 0,
       description: '',
       currency: 'USD',
-      method: 'dinheiro',
-      tag: 'alimentacao',
-      currenciesArray: [],
+      method: 'Dinheiro',
+      tag: alimentacao,
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -28,8 +30,9 @@ class Form extends Component {
   // https://github.com/tryber/sd-016-b-project-trybewallet/pull/55
 
   setAPIOptions() {
+    const { setFetchAPI } = this.props;
     requestFetchAPI()
-      .then((response) => this.setState({ currenciesArray: Object.keys(response) }));
+      .then((response) => { const array = Object.keys(response); setFetchAPI(array); });
   }
 
   handleChange({ target }) {
@@ -47,19 +50,20 @@ class Form extends Component {
       description: '',
       currency: 'USD',
       method: 'dinheiro',
-      tag: 'alimentacao',
+      tag: alimentacao,
     });
   }
 
   render() {
-    const { value, description, currency, method, tag, currenciesArray } = this.state;
+    const { value, description, currency, method, tag } = this.state;
+    const { currenciesArray } = this.props;
     return (
       <form>
         <label htmlFor="value">
           Valor da despesa:
           <input
             type="number"
-            name="value"
+            id="value"
             data-testid="value-input"
             value={ value }
             onChange={ this.handleChange }
@@ -69,7 +73,7 @@ class Form extends Component {
           Descrição:
           <input
             type="text"
-            name="description"
+            id="description"
             data-testid="description-input"
             value={ description }
             onChange={ this.handleChange }
@@ -79,42 +83,42 @@ class Form extends Component {
           Moeda:
           <select
             type="number"
-            name="currency"
+            id="currency"
             data-testid="currency-input"
             value={ currency }
             onChange={ this.handleChange }
           >
             { currenciesArray
               .filter((e) => e !== 'USDT')
-              .map((e) => <option key={ e }>{e}</option>) }
+              .map((e) => <option key={ e } data-testid={ e }>{e}</option>) }
           </select>
         </label>
         <label htmlFor="method">
           Metodo de pagamento:
           <select
             data-testid="method-input"
-            name="method"
+            id="method"
             value={ method }
             onChange={ this.handleChange }
           >
-            <option value="dinheiro">Dinheiro</option>
-            <option value="credito">Cartão de crédito</option>
-            <option value="debito">Cartão de débito</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão de crédito">Cartão de crédito</option>
+            <option value="Cartão de débito">Cartão de débito</option>
           </select>
         </label>
         <label htmlFor="tag">
           Categoria:
           <select
             data-testid="tag-input"
-            name="tag"
+            id="tag"
             value={ tag }
             onChange={ this.handleChange }
           >
-            <option value="alimentacao">Alimentação</option>
-            <option value="lazer">Lazer</option>
-            <option value="trabalho">Trabalho</option>
-            <option value="transporte">Transporte</option>
-            <option value="saude">Saúde</option>
+            <option value={ alimentacao }>Alimentação</option>
+            <option value="Lazer">Lazer</option>
+            <option value="Trabalho">Trabalho</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Saúde">Saúde</option>
           </select>
         </label>
         <button
@@ -128,8 +132,17 @@ class Form extends Component {
   }
 }
 
-const mapDispatchToProps = (dispatch) => ({
-  setFetchAPI: () => dispatch(fetchAPICurrencies()),
+Form.propTypes = {
+  currenciesArray: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
+  setFetchAPI: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = (state) => ({
+  currenciesArray: state.wallet.currencies,
 });
 
-export default connect(null, mapDispatchToProps)(Form);
+const mapDispatchToProps = (dispatch) => ({
+  setFetchAPI: (state) => dispatch(getCurrencies(state)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Form);
